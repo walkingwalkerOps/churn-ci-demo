@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run tests
+        run: python -m pytest -q
+
+  train:                      # job id: train
+    runs-on: ubuntu-latest
+    needs: test                # only run if the test job succeeded
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Build the dataset
+        run: python src/make_data.py
+      - name: Train and evaluate
+        run: python src/train_eval.py
+      - name: Quality gate
+        run: python src/check_metrics.py --min-recall 0.45
